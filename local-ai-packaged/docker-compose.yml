@@ -126,6 +126,7 @@ services:
       - ${DATA_FOLDER}/caddy_config:/config
       - ${DATA_FOLDER}/caddy_config/Caddyfile:/etc/caddy/Caddyfile
 
+
   qdrant:
     image: qdrant/qdrant
     container_name: qdrant
