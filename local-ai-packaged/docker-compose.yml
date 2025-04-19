@@ -7,7 +7,6 @@ volumes:
   caddy_data:
     external: true
   n8n_storage:
-    external: true
 
 networks:
   localai:
