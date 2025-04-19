@@ -61,10 +61,11 @@ services:
     volumes:
       - open-webui:/app/backend/data
     healthcheck:
-      test: ["CMD", "curl -f http://localhost:8080/health || exit 1"]
+      test: ["CMD", "curl -f http://localhost:8080 || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 40s
 
   postgres:
     image: postgres:16-alpine
@@ -126,6 +127,12 @@ services:
         condition: service_healthy
       n8n-import:
         condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "curl -f http://localhost:5678/healthz || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
 
   caddy:
     image: caddy:latest
@@ -142,6 +149,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 40s
     depends_on:
       n8n:
         condition: service_healthy
