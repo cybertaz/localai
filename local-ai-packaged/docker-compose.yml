@@ -3,7 +3,6 @@ volumes:
   ollama_storage:
   qdrant_storage:
   open-webui:
-
   caddy_data:
   n8n_storage:
 
