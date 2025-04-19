@@ -5,7 +5,7 @@ automation.valdani.com {
 }
 
 aichat.valdani.com {
-    reverse_proxy open-webui:3000 {
+    reverse_proxy open-webui:8080 {
       flush_interval -1
     }
 }
