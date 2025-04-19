@@ -1,14 +1,4 @@
-volumes:
-  postgres_storage:
-  ollama_storage:
-  qdrant_storage:
-  open-webui:
-  flowise:
 
-  caddy_data:
-    external: true
-  n8n_storage:
-    external: true
 
 networks:
   localai:
@@ -148,4 +138,16 @@ services:
     <<: *init-ollama
     depends_on:
       - ollama-cpu
+
+volumes:
+  postgres_storage:
+  ollama_storage:
+  qdrant_storage:
+  open-webui:
+  flowise:
+
+  caddy_data:
+    external: true
+  n8n_storage:
+    external: true
 
