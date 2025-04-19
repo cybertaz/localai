@@ -116,6 +116,7 @@ services:
 
   caddy:
     image: caddy:latest
+    networks: ['localai']
     restart: unless-stopped
     ports:
       - "80:80"
