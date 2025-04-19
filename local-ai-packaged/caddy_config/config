@@ -1,0 +1,17 @@
+n8n.valdani.com {
+    reverse_proxy n8n:5678 {
+      flush_interval -1
+    }
+}
+
+aichat.valdani.com {
+    reverse_proxy aichat:3000 {
+      flush_interval -1
+    }
+}
+
+aivectordb.valdani.com {
+    reverse_proxy aivectordb:6333 {
+      flush_interval -1
+    }
+}
