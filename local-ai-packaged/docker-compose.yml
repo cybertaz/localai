@@ -8,6 +8,11 @@ volumes:
 
 networks:
   localai:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/16
 
 x-n8n: &service-n8n
   image: n8nio/n8n:latest
@@ -55,6 +60,11 @@ services:
       - "host.docker.internal:host-gateway"
     volumes:
       - open-webui:/app/backend/data
+    healthcheck:
+      test: ["CMD", "curl -f http://localhost:8080/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   postgres:
     image: postgres:16-alpine
@@ -89,6 +99,7 @@ services:
     <<: *service-n8n
     container_name: n8n
     restart: unless-stopped
+    networks: ['localai']
     volumes:
       - n8n_storage:/home/node/.n8n
       - ./n8n/backup:/backup
@@ -107,6 +118,11 @@ services:
       - WEBHOOK_URL=https://${SUBDOMAIN}.${DOMAIN_NAME}/
       - GENERIC_TIMEZONE=${GENERIC_TIMEZONE}
       - N8N_COMMUNITY_PACKAGES_ALLOW_TOOL_USAGE=true
+    healthcheck:
+      test: ["CMD", "curl -f http://localhost:5678/healthz || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   caddy:
     image: caddy:latest
@@ -123,6 +139,11 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    depends_on:
+      n8n:
+        condition: service_healthy
+      open-webui:
+        condition: service_healthy
 
   qdrant:
     image: qdrant/qdrant
