@@ -5,7 +5,6 @@ volumes:
   open-webui:
 
   caddy_data:
-    external: true
   n8n_storage:
 
 networks:
