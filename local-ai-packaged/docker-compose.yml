@@ -1,17 +1,21 @@
 volumes:
-  n8n_storage:
   postgres_storage:
   ollama_storage:
   qdrant_storage:
   open-webui:
   flowise:
 
+  caddy_data:
+    external: true
+  n8n_storage:
+    external: true
+
 networks:
-  demo:
+  localai:
 
 x-n8n: &service-n8n
   image: n8nio/n8n:latest
-  networks: ['demo']
+  networks: ['localai']
   environment:
     - DB_TYPE=postgresdb
     - DB_POSTGRESDB_HOST=postgres
@@ -27,7 +31,7 @@ x-n8n: &service-n8n
 x-ollama: &service-ollama
   image: ollama/ollama:latest
   container_name: ollama
-  networks: ['demo']
+  networks: ['localai']
   restart: unless-stopped
   ports:
     - 11434:11434
@@ -36,7 +40,7 @@ x-ollama: &service-ollama
 
 x-init-ollama: &init-ollama
   image: ollama/ollama:latest
-  networks: ['demo']
+  networks: ['localai']
   container_name: ollama-pull-llama
   volumes:
     - ollama_storage:/root/.ollama
@@ -46,24 +50,9 @@ x-init-ollama: &init-ollama
     - "sleep 3; OLLAMA_HOST=ollama:11434 ollama pull llama3.1; OLLAMA_HOST=ollama:11434 ollama pull nomic-embed-text"
 
 services:
-  flowise:
-    image: flowiseai/flowise
-    networks: ['demo']
-    restart: unless-stopped
-    container_name: flowise
-    environment:
-        - PORT=3001
-    ports:
-        - 3001:3001
-    extra_hosts:
-      - "host.docker.internal:host-gateway"        
-    volumes:
-        - ~/.flowise:/root/.flowise
-    entrypoint: /bin/sh -c "sleep 3; flowise start"
-
   open-webui:
     image: ghcr.io/open-webui/open-webui:main
-    networks: ['demo']
+    networks: ['localai']
     restart: unless-stopped
     container_name: open-webui
     ports:
@@ -75,7 +64,7 @@ services:
 
   postgres:
     image: postgres:16-alpine
-    networks: ['demo']
+    networks: ['localai']
     restart: unless-stopped
     ports:
       - 5432:5432
@@ -114,16 +103,25 @@ services:
       - n8n_storage:/home/node/.n8n
       - ./n8n/backup:/backup
       - ./shared:/data/shared
+      - ${DATA_FOLDER}/local_files:/files
     depends_on:
       postgres:
         condition: service_healthy
       n8n-import:
         condition: service_completed_successfully
+    environment:
+      - N8N_HOST=${SUBDOMAIN}.${DOMAIN_NAME}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=https
+      - NODE_ENV=production
+      - WEBHOOK_URL=https://${SUBDOMAIN}.${DOMAIN_NAME}/
+      - GENERIC_TIMEZONE=${GENERIC_TIMEZONE}
+      - N8N_COMMUNITY_PACKAGES_ALLOW_TOOL_USAGE=true
 
   qdrant:
     image: qdrant/qdrant
     container_name: qdrant
-    networks: ['demo']
+    networks: ['localai']
     restart: unless-stopped
     ports:
       - 6333:6333
@@ -134,25 +132,9 @@ services:
     profiles: ["cpu"]
     <<: *service-ollama
 
-  ollama-gpu:
-    profiles: ["gpu-nvidia"]
-    <<: *service-ollama
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: 1
-              capabilities: [gpu]
-
   ollama-pull-llama-cpu:
     profiles: ["cpu"]
     <<: *init-ollama
     depends_on:
       - ollama-cpu
 
-  ollama-pull-llama-gpu:
-    profiles: ["gpu-nvidia"]
-    <<: *init-ollama
-    depends_on:
-      - ollama-gpu
